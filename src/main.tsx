@@ -13,10 +13,14 @@ import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
 
 import App from './App.tsx'
+import Dashboard from './components/Dashboard.tsx'
+import Header from './components/Header.tsx'
+
 
 const rootRoute = createRootRoute({
   component: () => (
     <>
+      <Header/>
       <Outlet />
       <TanStackRouterDevtools />
     </>
@@ -26,10 +30,15 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: App,
+  component: App
+})
+const testRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/test',
+  component: Dashboard
 })
 
-const routeTree = rootRoute.addChildren([indexRoute])
+const routeTree = rootRoute.addChildren([indexRoute,testRoute])
 
 const router = createRouter({
   routeTree,
