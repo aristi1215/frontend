@@ -1,110 +1,114 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
 import {
-  PieChart,
-  Pie,
-  Tooltip,
   Cell,
-  ResponsiveContainer,
   Legend,
-} from "recharts";
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts'
 
 interface Transaction {
-  transaction_id: string;
-  date: string;
-  merchant_name?: string;
-  name: string;
-  amount: number;
-  logo_url?: string;
+  transaction_id: string
+  date: string
+  merchant_name?: string
+  name: string
+  amount: number
+  logo_url?: string
   personal_finance_category?: {
-    primary?: string;
-  };
+    primary?: string
+  }
 }
 
 interface ChartData {
-  name: string;
-  value: number;
+  name: string
+  value: number
 }
 
 const Dashboard: React.FC = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [userEmail, setUserEmail] = useState<string>("")
+  const [transactions, setTransactions] = useState<Array<Transaction>>([])
+  const [categoryFilter, setCategoryFilter] = useState<string>('')
+  const [loading, setLoading] = useState<boolean>(true)
+  const [saving, setSaving] = useState<boolean>(false)
+  const [userEmail, setUserEmail] = useState<string>('')
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        setLoading(true);
-        const email = localStorage.getItem("userEmail");
-        setUserEmail(email||"")
-        const accessToken = localStorage.getItem("access_token");
+        setLoading(true)
+        const email = localStorage.getItem('userEmail')
+        setUserEmail(email || '')
+        const accessToken = localStorage.getItem('access_token')
 
         if (!email || !accessToken) {
-          throw new Error("No email or access token found in localStorage");
+          throw new Error('No email or access token found in localStorage')
         }
 
         // Call Lambda to save transactions in S3
-        setSaving(true);
+        setSaving(true)
         await axios.post(
-          "https://mr7vttk4oqw3ia6eia7a4xwgym0hciav.lambda-url.us-east-1.on.aws/",
-          { email, access_token: accessToken }
-        );
-        setSaving(false);
+          'https://mr7vttk4oqw3ia6eia7a4xwgym0hciav.lambda-url.us-east-1.on.aws/',
+          { email, access_token: accessToken },
+        )
+        setSaving(false)
 
         // Fetch transactions JSON from S3
-        const s3Key = `${email}-transactions.json`;
-        const s3Url = `https://user-transactiones-9122025.s3.us-east-1.amazonaws.com/${s3Key}`;
+        const s3Key = `${email}-transactions.json`
+        const s3Url = `https://user-transactiones-9122025.s3.us-east-1.amazonaws.com/${s3Key}`
 
-        const response = await axios.get<Transaction[]>(s3Url);
-        setTransactions(response.data);
+        const response = await axios.get<Array<Transaction>>(s3Url)
+        setTransactions(response.data)
       } catch (err: any) {
-        console.error("Error fetching transactions:", err);
+        console.error('Error fetching transactions:', err)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchTransactions();
-  }, []);
+    fetchTransactions()
+  }, [])
 
   const filteredTransactions = transactions.filter((t) => {
-    if (!categoryFilter) return true;
-    return t.personal_finance_category?.primary === categoryFilter;
-  });
+    if (!categoryFilter) return true
+    return t.personal_finance_category?.primary === categoryFilter
+  })
 
-  const chartData: ChartData[] = filteredTransactions.reduce<ChartData[]>((acc, t) => {
-    const category = t.personal_finance_category?.primary || "Other";
-    const existing = acc.find((c) => c.name === category);
+  const chartData: Array<ChartData> = filteredTransactions.reduce<
+    Array<ChartData>
+  >((acc, t) => {
+    const category = t.personal_finance_category?.primary || 'Other'
+    const existing = acc.find((c) => c.name === category)
     if (existing) {
-      existing.value += t.amount;
+      existing.value += t.amount
     } else {
-      acc.push({ name: category, value: t.amount });
+      acc.push({ name: category, value: t.amount })
     }
-    return acc;
-  }, []);
+    return acc
+  }, [])
 
   const COLORS = [
-    "#3B82F6",
-    "#10B981",
-    "#F59E0B",
-    "#EF4444",
-    "#8B5CF6",
-    "#EC4899",
-    "#6B7280",
-  ];
+    '#3B82F6',
+    '#10B981',
+    '#F59E0B',
+    '#EF4444',
+    '#8B5CF6',
+    '#EC4899',
+    '#6B7280',
+  ]
 
   if (loading)
     return (
       <div className="flex justify-center items-center h-screen text-gray-500">
-        {saving ? "Saving data..." : "Loading transactions..."}
+        {saving ? 'Saving data...' : 'Loading transactions...'}
       </div>
-    );
+    )
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Welcome {userEmail}</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">
+        Welcome {userEmail}
+      </h1>
 
       {/* Filter */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:gap-4">
@@ -117,20 +121,26 @@ const Dashboard: React.FC = () => {
           className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
         >
           <option value="">All</option>
-          {[...new Set(transactions.map((t) => t.personal_finance_category?.primary).filter(Boolean))].map(
-            (cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            )
-          )}
+          {[
+            ...new Set(
+              transactions
+                .map((t) => t.personal_finance_category?.primary)
+                .filter(Boolean),
+            ),
+          ].map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
         </select>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Transactions Table */}
         <div className="flex-1 bg-white rounded-lg shadow p-4 overflow-x-auto">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Transactions</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">
+            Transactions
+          </h2>
           <table className="min-w-full table-auto border-collapse">
             <thead className="bg-gray-100">
               <tr>
@@ -157,7 +167,9 @@ const Dashboard: React.FC = () => {
                     )}
                     {t.merchant_name || t.name}
                   </td>
-                  <td className="px-4 py-2">{t.personal_finance_category?.primary || "Other"}</td>
+                  <td className="px-4 py-2">
+                    {t.personal_finance_category?.primary || 'Other'}
+                  </td>
                   <td className="px-4 py-2 font-medium text-gray-700">
                     ${t.amount.toFixed(2)}
                   </td>
@@ -169,17 +181,32 @@ const Dashboard: React.FC = () => {
 
         {/* Chart */}
         <div className="flex-1 bg-white rounded-lg shadow p-4 flex flex-col">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Spending by Category</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">
+            Spending by Category
+          </h2>
           <ResponsiveContainer width="100%" height={400}>
             <PieChart>
-              <Pie data={chartData} dataKey="value" nameKey="name" outerRadius={150} fill="#8884d8" label>
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Pie
+                data={chartData as any}
+                dataKey="value"
+                nameKey="name"
+                outerRadius={150}
+                fill="#8884d8"
+                label
+              >
+                {chartData.map((_, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
               <Tooltip
                 formatter={(value: number) => `$${value.toFixed(2)}`}
-                contentStyle={{ backgroundColor: "#F9FAFB", borderRadius: "8px" }}
+                contentStyle={{
+                  backgroundColor: '#F9FAFB',
+                  borderRadius: '8px',
+                }}
               />
               <Legend />
             </PieChart>
@@ -187,7 +214,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Dashboard;
+export default Dashboard
